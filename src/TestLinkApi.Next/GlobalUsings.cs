@@ -1,0 +1,1 @@
+﻿global using TestLinkApi.Next.Models;
