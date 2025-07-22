@@ -52,3 +52,7 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+/src/.vs
+/src/TestLinkApi.Next.sln.DotSettings.user
+/src/TestLinkApi.Next.Tests/xmlrpc.class.php
+/.vs
