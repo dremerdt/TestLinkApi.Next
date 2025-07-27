@@ -135,6 +135,7 @@ public static class XmlRpcResponseParser
     {
         return type.IsGenericType && 
                (type.GetGenericTypeDefinition() == typeof(IEnumerable<>) ||
+                type.GetGenericTypeDefinition() == typeof(List<>) ||
                 type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>)));
     }
 
@@ -523,6 +524,11 @@ public static class XmlRpcResponseParser
             return ConvertToTestPlan(dict);
         }
 
+        if (targetType == typeof(TestSuite))
+        {
+            return ConvertToTestSuite(dict);
+        }
+
         if (targetType == typeof(TestPlatform))
         {
             return ConvertToTestPlatform(dict);
@@ -669,6 +675,31 @@ public static class XmlRpcResponseParser
                 }
                 return ConvertList<T>(list, elementType);
             }
+            else
+            {
+                // Handle the case where we have a single object but expect a collection
+                // This happens when TestLink returns a single struct but we expect IEnumerable<T>
+                try
+                {
+                    var singleItem = ConvertDictionaryToType(dict, elementType);
+                    if (singleItem != null)
+                    {
+                        var list = new List<object?> { singleItem };
+                        return ConvertList<T>(list, elementType);
+                    }
+                }
+                catch
+                {
+                    // If conversion fails, return empty collection
+                    return ConvertList<T>(new List<object?>(), elementType);
+                }
+            }
+        }
+
+        // Special handling for TestSuite
+        if (typeof(T) == typeof(TestSuite))
+        {
+            return (T)(object)ConvertToTestSuite(dict);
         }
 
         // Special handling for TestPlan
@@ -1297,6 +1328,34 @@ public static class XmlRpcResponseParser
         };
     }
 
+    private static TestSuite ConvertToTestSuite(Dictionary<string, object?> dict)
+    {
+        // Helper method to safely get and convert values
+        T GetValue<T>(string key, T defaultValue = default!)
+        {
+            var foundKey = FindDictionaryKey(dict, key);
+            if (foundKey != null && dict.TryGetValue(foundKey, out var value))
+            {
+                if (typeof(T) == typeof(int) && TryParseInt(value, out var intVal))
+                    return (T)(object)intVal;
+                
+                if (typeof(T) == typeof(string))
+                    return (T)(object)(value?.ToString() ?? string.Empty);
+            }
+            return defaultValue;
+        }
+
+        return new TestSuite
+        {
+            Id = GetValue<int>("id"),
+            Name = GetValue<string>("name"),
+            Details = GetValue<string>("details"),
+            ParentId = GetValue<int>("parent_id"),
+            NodeTypeId = GetValue<int>("node_type_id"),
+            NodeOrder = GetValue<int>("node_order")
+        };
+    }
+
     private static TestPlan ConvertToTestPlan(Dictionary<string, object?> dict)
     {
         // Helper method to safely get and convert values
@@ -1384,9 +1443,9 @@ public static class XmlRpcResponseParser
                     var intDict = new Dictionary<string, int>();
                     foreach (var kvp in dictValue)
                     {
-                        if (TryParseInt(kvp.Value, out var intVal2))
+                        if (TryParseInt(kvp.Value, out var detailIntVal))
                         {
-                            intDict[kvp.Key] = intVal2;
+                            intDict[kvp.Key] = detailIntVal;
                         }
                     }
                     return (T)(object)intDict;
@@ -1403,9 +1462,9 @@ public static class XmlRpcResponseParser
         {
             foreach (var kvp in detailsDict)
             {
-                if (TryParseInt(kvp.Value, out var intVal))
+                if (TryParseInt(kvp.Value, out var detailIntVal))
                 {
-                    details[kvp.Key] = intVal;
+                    details[kvp.Key] = detailIntVal;
                 }
             }
         }
