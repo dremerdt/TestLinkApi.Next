@@ -286,18 +286,15 @@ TestLinkConstants.Importance.High   // 3
 
 - **Basic Operations**: Ping, SayHello, About, CheckDevKey, DoesUserExist, SetTestMode, Repeat, GetFullPath
 - **Project Operations**: GetProjects, GetTestProjectByName, CreateTestProject, UploadTestProjectAttachment, GetProjectTestPlans, GetFirstLevelTestSuitesForTestProject
-- **Test Plan Operations**: CreateTestPlan, GetTestPlanByName, GetTestPlanPlatforms, GetTotalsForTestPlan
+- **Test Plan Operations**: CreateTestPlan, GetTestPlanByName, GetTestPlanPlatforms, GetTotalsForTestPlan, AddTestCaseToTestPlan, GetBuildsForTestPlan, GetLatestBuildForTestPlan, CreateBuild, GetLastExecutionResult, DeleteExecution, ReportTestCaseResult
 - **Test Suite Operations**: CreateTestSuite, UploadTestSuiteAttachment, GetTestSuitesForTestPlan, GetTestSuitesForTestSuite, GetTestSuiteById
 - **Test Case Operations**: CreateTestCase, UploadTestCaseAttachment, GetTestCasesForTestSuite, GetTestCasesForTestPlan, GetTestCaseIdByName, GetTestCaseCustomFieldDesignValue, GetTestCaseAttachments, GetTestCase
+- **Attachment Operations**: UploadAttachment, UploadRequirementSpecificationAttachment, UploadRequirementAttachment  
+- **Requirement Operations**: AssignRequirements
 
 ### 🚧 Planned Operations
 
-- Test execution reporting
-- Build management
-- Platform management  
-- Keyword management
-- Requirements linking
-- Custom field management
+- ...
 
 ## Configuration
 
