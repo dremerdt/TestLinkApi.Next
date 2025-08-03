@@ -564,6 +564,12 @@ public static class XmlRpcResponseParser
             return ConvertToAttachment(dict);
         }
 
+        // Special handling for Build
+        if (targetType == typeof(Build))
+        {
+            return ConvertToBuild(dict);
+        }
+
         // Generic object conversion
         try
         {
@@ -1223,6 +1229,7 @@ public static class XmlRpcResponseParser
             { "ExternalId", "tc_external_id" },
             { "ParentId", "parent_id" },
             { "TestProjectId", "testproject_id" },
+            { "TestPlanId", "testplan_id" }, // Add mapping for Build.TestPlanId
             { "TestCaseCounter", "tc_counter" },
             { "IsPublic", "is_public" },
             { "Message", "msg" },
@@ -1358,7 +1365,7 @@ public static class XmlRpcResponseParser
 
     private static TestPlan ConvertToTestPlan(Dictionary<string, object?> dict)
     {
-        // Helper method to safely get and convert values
+        // Helper method to safely get and converter values
         T GetValue<T>(string key, T defaultValue = default!)
         {
             var foundKey = FindDictionaryKey(dict, key);
@@ -1475,6 +1482,45 @@ public static class XmlRpcResponseParser
             Name = GetValue<string>("name"),
             TotalTestCases = GetValue<int>("total_tc"),
             Details = details
+        };
+    }
+
+    private static Build ConvertToBuild(Dictionary<string, object?> dict)
+    {
+        // Helper method to safely get and convert values
+        T GetValue<T>(string key, T defaultValue = default!)
+        {
+            var foundKey = FindDictionaryKey(dict, key);
+            if (foundKey != null && dict.TryGetValue(foundKey, out var value))
+            {
+                if (typeof(T) == typeof(int) && TryParseInt(value, out var intVal))
+                    return (T)(object)intVal;
+                
+                if (typeof(T) == typeof(bool) && TryParseBool(value, out var boolVal))
+                    return (T)(object)boolVal;
+                
+                if (typeof(T) == typeof(string))
+                    return (T)(object)(value?.ToString() ?? string.Empty);
+                
+                if (typeof(T) == typeof(DateTime) && value is string dateStr)
+                {
+                    if (DateTime.TryParse(dateStr, out var dateValue))
+                        return (T)(object)dateValue;
+                    else
+                        return (T)(object)default(DateTime);
+                }
+            }
+            return defaultValue;
+        }
+
+        return new Build
+        {
+            Id = GetValue<int>("id"),
+            Name = GetValue<string>("name"),
+            Notes = GetValue<string>("notes"),
+            TestPlanId = GetValue<int>("testplan_id"), // Map testplan_id to TestPlanId
+            Active = GetValue<bool>("active"),
+            IsOpen = GetValue<bool>("is_open")
         };
     }
 }

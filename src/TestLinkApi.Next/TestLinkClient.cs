@@ -1,7 +1,6 @@
 using System.Text;
 using System.Xml;
 using TestLinkApi.Next.Contracts;
-using TestLinkApi.Next.Models;
 
 namespace TestLinkApi.Next;
 
@@ -249,6 +248,148 @@ public class TestLinkClient : ITestLinkOperations, IDisposable
             new { devKey = _apiKey, testplanid = testPlanId }, cancellationToken);
         
         return ParseResponse<IEnumerable<TestPlanTotal>>(response);
+    }
+
+    public async Task<GeneralResult> AddTestCaseToTestPlanAsync(
+        int testProjectId,
+        int testPlanId,
+        string testCaseExternalId,
+        int version,
+        int? platformId = null,
+        int? executionOrder = null,
+        int? urgency = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(testCaseExternalId);
+
+        var parameters = new Dictionary<string, object>
+        {
+            { "devKey", _apiKey },
+            { "testprojectid", testProjectId },
+            { "testplanid", testPlanId },
+            { "testcaseexternalid", testCaseExternalId },
+            { "version", version }
+        };
+
+        if (platformId.HasValue)
+            parameters["platformid"] = platformId.Value;
+
+        if (executionOrder.HasValue)
+            parameters["executionorder"] = executionOrder.Value;
+
+        if (urgency.HasValue)
+            parameters["urgency"] = urgency.Value;
+
+        var response = await CallApiAsync(TestLinkApiMethods.AddTestCaseToTestPlan, parameters, cancellationToken);
+        return ParseResponse<GeneralResult>(response);
+    }
+
+    public async Task<IEnumerable<Build>> GetBuildsForTestPlanAsync(
+        int testPlanId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await CallApiAsync(TestLinkApiMethods.GetBuildsForTestPlan, 
+            new { devKey = _apiKey, testplanid = testPlanId }, cancellationToken);
+        
+        return ParseResponse<IEnumerable<Build>>(response);
+    }
+
+    public async Task<Build?> GetLatestBuildForTestPlanAsync(
+        int testPlanId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await CallApiAsync(TestLinkApiMethods.GetLatestBuildForTestPlan, 
+            new { devKey = _apiKey, testplanid = testPlanId }, cancellationToken);
+        
+        return ParseResponse<Build?>(response);
+    }
+
+    public async Task<GeneralResult> CreateBuildAsync(
+        int testPlanId,
+        string buildName,
+        string? buildNotes = null,
+        bool active = true,
+        bool open = true,
+        DateTime? releaseDate = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(buildName);
+
+        var parameters = new Dictionary<string, object>
+        {
+            { "devKey", _apiKey },
+            { "testplanid", testPlanId },
+            { "buildname", buildName },
+            { "buildnotes", buildNotes ?? string.Empty },
+            { "active", active ? 1 : 0 },
+            { "open", open ? 1 : 0 }
+        };
+
+        if (releaseDate.HasValue)
+        {
+            // TestLink expects date in YYYY-MM-DD format
+            parameters["releasedate"] = releaseDate.Value.ToString("yyyy-MM-dd");
+        }
+
+        var response = await CallApiAsync(TestLinkApiMethods.CreateBuild, parameters, cancellationToken);
+        return ParseResponse<GeneralResult>(response);
+    }
+
+    public async Task<ExecutionResult?> GetLastExecutionResultAsync(
+        int testPlanId,
+        int? testCaseId = null,
+        string? testCaseExternalId = null,
+        int? platformId = null,
+        string? platformName = null,
+        int? buildId = null,
+        string? buildName = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (testCaseId == null && string.IsNullOrEmpty(testCaseExternalId))
+        {
+            throw new ArgumentException("Either testCaseId or testCaseExternalId must be provided.");
+        }
+
+        var parameters = new Dictionary<string, object>
+        {
+            { "devKey", _apiKey },
+            { "testplanid", testPlanId }
+        };
+
+        if (testCaseId.HasValue)
+            parameters["testcaseid"] = testCaseId.Value;
+
+        if (!string.IsNullOrEmpty(testCaseExternalId))
+            parameters["testcaseexternalid"] = testCaseExternalId;
+
+        if (platformId.HasValue)
+            parameters["platformid"] = platformId.Value;
+
+        if (!string.IsNullOrEmpty(platformName))
+            parameters["platformname"] = platformName;
+
+        if (buildId.HasValue)
+            parameters["buildid"] = buildId.Value;
+
+        if (!string.IsNullOrEmpty(buildName))
+            parameters["buildname"] = buildName;
+
+        var response = await CallApiAsync(TestLinkApiMethods.GetLastExecutionResult, parameters, cancellationToken);
+        return ParseResponse<ExecutionResult?>(response);
+    }
+
+    public async Task<GeneralResult> DeleteExecutionAsync(
+        int executionId,
+        CancellationToken cancellationToken = default)
+    {
+        var parameters = new Dictionary<string, object>
+        {
+            { "devKey", _apiKey },
+            { "executionid", executionId }
+        };
+
+        var response = await CallApiAsync(TestLinkApiMethods.DeleteExecution, parameters, cancellationToken);
+        return ParseResponse<GeneralResult>(response);
     }
 
     #endregion
