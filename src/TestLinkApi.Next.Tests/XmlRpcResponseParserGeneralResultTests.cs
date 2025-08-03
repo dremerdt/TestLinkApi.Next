@@ -293,4 +293,301 @@ public class XmlRpcResponseParserGeneralResultTests
         Assert.Equal(2, info.VersionNumber);
         Assert.False(info.HasDuplicate);
     }
+
+    #region ReportTestCaseResult Response Tests
+
+    [Fact]
+    public void ParseResponse_ShouldParseReportTestCaseResultResponse_Success()
+    {
+        // Arrange - Typical successful response from reportTCResult
+        var reportResultXml = """
+            <?xml version="1.0"?>
+            <methodResponse>
+              <params>
+                <param>
+                  <value>
+                    <array><data>
+                      <value><struct>
+                        <member><n>id</n><value><int>123</int></value></member>
+                        <member><n>operation</n><value><string>reportTCResult</string></value></member>
+                        <member><n>status</n><value><boolean>1</boolean></value></member>
+                        <member><n>message</n><value><string>Test case execution recorded successfully</string></value></member>
+                      </struct></value>
+                    </data></array>
+                  </value>
+                </param>
+              </params>
+            </methodResponse>
+            """;
+
+        // Act
+        var result = XmlRpcResponseParser.ParseResponse<GeneralResult>(reportResultXml);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(123, result.Id);
+        Assert.Equal("reportTCResult", result.Operation);
+        Assert.True(result.Status);
+        Assert.Equal("Test case execution recorded successfully", result.Message);
+    }
+
+    [Fact]
+    public void ParseResponse_ShouldParseReportTestCaseResultResponse_WithAdditionalInfo()
+    {
+        // Arrange - Response with additional execution information
+        var reportResultXml = """
+            <?xml version="1.0"?>
+            <methodResponse>
+              <params>
+                <param>
+                  <value>
+                    <struct>
+                      <member><n>id</n><value><int>456</int></value></member>
+                      <member><n>operation</n><value><string>reportTCResult</string></value></member>
+                      <member><n>status</n><value><boolean>1</boolean></value></member>
+                      <member><n>message</n><value><string>Execution created</string></value></member>
+                      <member><n>additionalInfo</n><value><struct>
+                        <member><n>execution_id</n><value><int>789</int></value></member>
+                        <member><n>status_ok</n><value><boolean>1</boolean></value></member>
+                        <member><n>message</n><value><string>Test case passed successfully</string></value></member>
+                      </struct></value></member>
+                    </struct>
+                  </value>
+                </param>
+              </params>
+            </methodResponse>
+            """;
+
+        // Act
+        var result = XmlRpcResponseParser.ParseResponse<GeneralResult>(reportResultXml);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(456, result.Id);
+        Assert.Equal("reportTCResult", result.Operation);
+        Assert.True(result.Status);
+        Assert.Equal("Execution created", result.Message);
+        Assert.NotNull(result.AdditionalInfo);
+        Assert.True(result.AdditionalInfo.StatusOk);
+        Assert.Equal("Test case passed successfully", result.AdditionalInfo.Message);
+    }
+
+    [Fact]
+    public void ParseResponse_ShouldParseReportTestCaseResultResponse_WithBlockedStatus()
+    {
+        // Arrange - Response for blocked test case result
+        var reportBlockedXml = """
+            <?xml version="1.0"?>
+            <methodResponse>
+              <params>
+                <param>
+                  <value>
+                    <array><data>
+                      <value><struct>
+                        <member><n>id</n><value><int>999</int></value></member>
+                        <member><n>operation</n><value><string>reportTCResult</string></value></member>
+                        <member><n>status</n><value><boolean>1</boolean></value></member>
+                        <member><n>message</n><value><string>Test case blocked due to environment issues</string></value></member>
+                      </struct></value>
+                    </data></array>
+                  </value>
+                </param>
+              </params>
+            </methodResponse>
+            """;
+
+        // Act
+        var result = XmlRpcResponseParser.ParseResponse<GeneralResult>(reportBlockedXml);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(999, result.Id);
+        Assert.Equal("reportTCResult", result.Operation);
+        Assert.True(result.Status);
+        Assert.Equal("Test case blocked due to environment issues", result.Message);
+    }
+
+    [Fact]
+    public void ParseResponse_ShouldParseReportTestCaseResultResponse_WithEmptyNotes()
+    {
+        // Arrange - Response with minimal information
+        var reportMinimalXml = """
+            <?xml version="1.0"?>
+            <methodResponse>
+              <params>
+                <param>
+                  <value>
+                    <array><data>
+                      <value><struct>
+                        <member><n>id</n><value><int>111</int></value></member>
+                        <member><n>operation</n><value><string>reportTCResult</string></value></member>
+                        <member><n>status</n><value><boolean>1</boolean></value></member>
+                        <member><n>message</n><value><string></string></value></member>
+                      </struct></value>
+                    </data></array>
+                  </value>
+                </param>
+              </params>
+            </methodResponse>
+            """;
+
+        // Act
+        var result = XmlRpcResponseParser.ParseResponse<GeneralResult>(reportMinimalXml);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(111, result.Id);
+        Assert.Equal("reportTCResult", result.Operation);
+        Assert.True(result.Status);
+        Assert.Equal(string.Empty, result.Message);
+    }
+
+    [Fact]
+    public void ParseResponse_ShouldParseAssignRequirementsResponse_Success()
+    {
+        // Arrange - Successful response from assignRequirements
+        var assignRequirementsXml = """
+            <?xml version="1.0"?>
+            <methodResponse>
+              <params>
+                <param>
+                  <value>
+                    <struct>
+                      <member><n>id</n><value><int>0</int></value></member>
+                      <member><n>operation</n><value><string>assignRequirements</string></value></member>
+                      <member><n>status</n><value><boolean>1</boolean></value></member>
+                      <member><n>message</n><value><string>Requirements assigned successfully</string></value></member>
+                    </struct>
+                  </value>
+                </param>
+              </params>
+            </methodResponse>
+            """;
+
+        // Act
+        var result = XmlRpcResponseParser.ParseResponse<GeneralResult>(assignRequirementsXml);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(0, result.Id);
+        Assert.Equal("assignRequirements", result.Operation);
+        Assert.True(result.Status);
+        Assert.Equal("Requirements assigned successfully", result.Message);
+    }
+
+    [Fact]
+    public void ParseResponse_ShouldParseAssignRequirementsResponse_WithMultipleRequirements()
+    {
+        // Arrange - Response when assigning multiple requirements
+        var assignMultipleRequirementsXml = """
+            <?xml version="1.0"?>
+            <methodResponse>
+              <params>
+                <param>
+                  <value>
+                    <struct>
+                      <member><n>id</n><value><int>0</int></value></member>
+                      <member><n>operation</n><value><string>assignRequirements</string></value></member>
+                      <member><n>status</n><value><boolean>1</boolean></value></member>
+                      <member><n>message</n><value><string>3 requirements assigned to test case</string></value></member>
+                      <member><n>additionalInfo</n><value><struct>
+                        <member><n>assigned_count</n><value><int>3</int></value></member>
+                        <member><n>status_ok</n><value><boolean>1</boolean></value></member>
+                      </struct></value></member>
+                    </struct>
+                  </value>
+                </param>
+              </params>
+            </methodResponse>
+            """;
+
+        // Act
+        var result = XmlRpcResponseParser.ParseResponse<GeneralResult>(assignMultipleRequirementsXml);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(0, result.Id);
+        Assert.Equal("assignRequirements", result.Operation);
+        Assert.True(result.Status);
+        Assert.Equal("3 requirements assigned to test case", result.Message);
+        Assert.NotNull(result.AdditionalInfo);
+        Assert.True(result.AdditionalInfo.StatusOk);
+    }
+
+    [Fact]
+    public void ParseResponse_ShouldParseAssignRequirementsResponse_WithEmptyRequirementsList()
+    {
+        // Arrange - Response when no requirements are assigned (edge case)
+        var emptyAssignXml = """
+            <?xml version="1.0"?>
+            <methodResponse>
+              <params>
+                <param>
+                  <value>
+                    <struct>
+                      <member><n>id</n><value><int>0</int></value></member>
+                      <member><n>operation</n><value><string>assignRequirements</string></value></member>
+                      <member><n>status</n><value><boolean>1</boolean></value></member>
+                      <member><n>message</n><value><string>No requirements to assign</string></value></member>
+                    </struct>
+                  </value>
+                </param>
+              </params>
+            </methodResponse>
+            """;
+
+        // Act
+        var result = XmlRpcResponseParser.ParseResponse<GeneralResult>(emptyAssignXml);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(0, result.Id);
+        Assert.Equal("assignRequirements", result.Operation);
+        Assert.True(result.Status);
+        Assert.Equal("No requirements to assign", result.Message);
+    }
+
+    [Fact]
+    public void ParseResponse_ShouldParseAssignRequirements_PartialSuccess()
+    {
+        // Arrange - Response when some requirements were assigned but others failed
+        var partialSuccessXml = """
+            <?xml version="1.0"?>
+            <methodResponse>
+              <params>
+                <param>
+                  <value>
+                    <struct>
+                      <member><n>id</n><value><int>0</int></value></member>
+                      <member><n>operation</n><value><string>assignRequirements</string></value></member>
+                      <member><n>status</n><value><boolean>1</boolean></value></member>
+                      <member><n>message</n><value><string>2 of 3 requirements assigned successfully</string></value></member>
+                      <member><n>additionalInfo</n><value><struct>
+                        <member><n>assigned_count</n><value><int>2</int></value></member>
+                        <member><n>failed_count</n><value><int>1</int></value></member>
+                        <member><n>status_ok</n><value><boolean>1</boolean></value></member>
+                        <member><n>message</n><value><string>Some requirements could not be assigned due to permissions</string></value></member>
+                      </struct></value></member>
+                    </struct>
+                  </value>
+                </param>
+              </params>
+            </methodResponse>
+            """;
+
+        // Act
+        var result = XmlRpcResponseParser.ParseResponse<GeneralResult>(partialSuccessXml);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(0, result.Id);
+        Assert.Equal("assignRequirements", result.Operation);
+        Assert.True(result.Status);
+        Assert.Equal("2 of 3 requirements assigned successfully", result.Message);
+        Assert.NotNull(result.AdditionalInfo);
+        Assert.True(result.AdditionalInfo.StatusOk);
+        Assert.Equal("Some requirements could not be assigned due to permissions", result.AdditionalInfo.Message);
+    }
+
+    #endregion
 }

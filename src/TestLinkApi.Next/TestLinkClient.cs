@@ -719,6 +719,182 @@ public class TestLinkClient : ITestLinkOperations, IDisposable
 
     #endregion
 
+    #region Execution Operations
+
+    /// <summary>
+    /// Report test case execution result
+    /// </summary>
+    public async Task<GeneralResult> ReportTestCaseResultAsync(
+        ReportTestCaseResultRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(request.Status);
+
+        var parameters = new Dictionary<string, object>
+        {
+            { "devKey", _apiKey },
+            { "testcaseid", request.TestCaseId },
+            { "testplanid", request.TestPlanId },
+            { "status", request.Status },
+            { "overwrite", request.Overwrite ? 1 : 0 },
+            { "guess", request.Guess ? 1 : 0 }
+        };
+
+        if (request.PlatformId.HasValue)
+            parameters["platformid"] = request.PlatformId.Value;
+
+        if (!string.IsNullOrEmpty(request.PlatformName))
+            parameters["platformname"] = request.PlatformName;
+
+        if (!string.IsNullOrEmpty(request.Notes))
+            parameters["notes"] = request.Notes;
+
+        if (request.BuildId.HasValue)
+            parameters["buildid"] = request.BuildId.Value;
+
+        if (request.BugId.HasValue)
+            parameters["bugid"] = request.BugId.Value;
+
+        var response = await CallApiAsync(TestLinkApiMethods.ReportTestCaseResult, parameters, cancellationToken);
+        return ParseResponse<GeneralResult>(response);
+    }
+
+    #endregion
+
+    #region Attachment Operations
+
+    /// <summary>
+    /// Upload a general attachment
+    /// </summary>
+    public async Task<AttachmentRequestResponse> UploadAttachmentAsync(
+        int foreignKeyId,
+        string foreignKeyTable,
+        string fileName,
+        string fileType,
+        byte[] content,
+        string? title = null,
+        string? description = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(foreignKeyTable);
+        ArgumentNullException.ThrowIfNull(fileName);
+        ArgumentNullException.ThrowIfNull(fileType);
+        ArgumentNullException.ThrowIfNull(content);
+
+        var base64Content = Convert.ToBase64String(content);
+        
+        var parameters = new Dictionary<string, object>
+        {
+            { "devKey", _apiKey },
+            { "fkid", foreignKeyId },
+            { "fktable", foreignKeyTable },
+            { "filename", fileName },
+            { "filetype", fileType },
+            { "content", base64Content },
+            { "title", title ?? string.Empty },
+            { "description", description ?? string.Empty }
+        };
+
+        var response = await CallApiAsync(TestLinkApiMethods.UploadAttachment, parameters, cancellationToken);
+        return ParseResponse<AttachmentRequestResponse>(response);
+    }
+
+    /// <summary>
+    /// Upload an attachment to a requirement specification
+    /// </summary>
+    public async Task<AttachmentRequestResponse> UploadRequirementSpecificationAttachmentAsync(
+        int requirementSpecificationId,
+        string fileName,
+        string fileType,
+        byte[] content,
+        string? title = null,
+        string? description = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(fileName);
+        ArgumentNullException.ThrowIfNull(fileType);
+        ArgumentNullException.ThrowIfNull(content);
+
+        var base64Content = Convert.ToBase64String(content);
+        
+        var parameters = new Dictionary<string, object>
+        {
+            { "devKey", _apiKey },
+            { "reqspecid", requirementSpecificationId },
+            { "filename", fileName },
+            { "filetype", fileType },
+            { "content", base64Content },
+            { "title", title ?? string.Empty },
+            { "description", description ?? string.Empty }
+        };
+
+        var response = await CallApiAsync(TestLinkApiMethods.UploadRequirementSpecificationAttachment, parameters, cancellationToken);
+        return ParseResponse<AttachmentRequestResponse>(response);
+    }
+
+    /// <summary>
+    /// Upload an attachment to a requirement
+    /// </summary>
+    public async Task<AttachmentRequestResponse> UploadRequirementAttachmentAsync(
+        int requirementId,
+        string fileName,
+        string fileType,
+        byte[] content,
+        string? title = null,
+        string? description = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(fileName);
+        ArgumentNullException.ThrowIfNull(fileType);
+        ArgumentNullException.ThrowIfNull(content);
+
+        var base64Content = Convert.ToBase64String(content);
+        
+        var parameters = new Dictionary<string, object>
+        {
+            { "devKey", _apiKey },
+            { "reqid", requirementId },
+            { "filename", fileName },
+            { "filetype", fileType },
+            { "content", base64Content },
+            { "title", title ?? string.Empty },
+            { "description", description ?? string.Empty }
+        };
+
+        var response = await CallApiAsync(TestLinkApiMethods.UploadRequirementAttachment, parameters, cancellationToken);
+        return ParseResponse<AttachmentRequestResponse>(response);
+    }
+
+    #endregion
+
+    #region Requirement Operations
+
+    /// <summary>
+    /// Assign requirements to a test case
+    /// </summary>
+    public async Task<GeneralResult> AssignRequirementsAsync(
+        AssignRequirementsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(request.TestCaseExternalId);
+        ArgumentNullException.ThrowIfNull(request.RequirementIds);
+
+        var parameters = new Dictionary<string, object>
+        {
+            { "devKey", _apiKey },
+            { "testprojectid", request.TestProjectId },
+            { "testcaseexternalid", request.TestCaseExternalId },
+            { "requirements", request.RequirementIds }
+        };
+
+        var response = await CallApiAsync(TestLinkApiMethods.AssignRequirements, parameters, cancellationToken);
+        return ParseResponse<GeneralResult>(response);
+    }
+
+    #endregion
+
     #region Private Methods
 
     private async Task<string> CallApiAsync(string method, object parameters, CancellationToken cancellationToken)

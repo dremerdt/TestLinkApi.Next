@@ -349,4 +349,239 @@ public class XmlRpcResponseParserAttachmentTests
             }
         }
     }
+
+    #region General Upload Response Tests
+
+    [Fact]
+    public void ParseResponse_ShouldParseUploadAttachmentResponse_Success()
+    {
+        // Arrange - Successful response from uploadAttachment
+        var uploadAttachmentXml = """
+            <?xml version="1.0"?>
+            <methodResponse>
+              <params>
+                <param>
+                  <value>
+                    <struct>
+                      <member><name>fk_id</name><value><int>123</int></value></member>
+                      <member><name>fk_table</name><value><string>nodes_hierarchy</string></value></member>
+                      <member><name>title</name><value><string>General Attachment</string></value></member>
+                      <member><name>description</name><value><string>General attachment uploaded via API</string></value></member>
+                      <member><name>file_name</name><value><string>document.pdf</string></value></member>
+                      <member><name>file_size</name><value><int>2048</int></value></member>
+                      <member><name>file_type</name><value><string>application/pdf</string></value></member>
+                    </struct>
+                  </value>
+                </param>
+              </params>
+            </methodResponse>
+            """;
+
+        // Act
+        var result = XmlRpcResponseParser.ParseResponse<AttachmentRequestResponse>(uploadAttachmentXml);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(123, result.ForeignKeyId);
+        Assert.Equal("nodes_hierarchy", result.LinkedTableName);
+        Assert.Equal("General Attachment", result.Title);
+        Assert.Equal("General attachment uploaded via API", result.Description);
+        Assert.Equal("document.pdf", result.FileName);
+        Assert.Equal(2048, result.Size);
+        Assert.Equal("application/pdf", result.FileType);
+    }
+
+    [Fact]
+    public void ParseResponse_ShouldParseUploadRequirementSpecAttachmentResponse_Success()
+    {
+        // Arrange - Successful response from uploadRequirementSpecificationAttachment
+        var uploadReqSpecAttachmentXml = """
+            <?xml version="1.0"?>
+            <methodResponse>
+              <params>
+                <param>
+                  <value>
+                    <struct>
+                      <member><name>fk_id</name><value><int>456</int></value></member>
+                      <member><name>fk_table</name><value><string>req_specs</string></value></member>
+                      <member><name>title</name><value><string>Requirement Specification Document</string></value></member>
+                      <member><name>description</name><value><string>Supporting documentation for requirement specification</string></value></member>
+                      <member><name>file_name</name><value><string>req_spec.docx</string></value></member>
+                      <member><name>file_size</name><value><int>1024</int></value></member>
+                      <member><name>file_type</name><value><string>application/vnd.openxmlformats-officedocument.wordprocessingml.document</string></value></member>
+                    </struct>
+                  </value>
+                </param>
+              </params>
+            </methodResponse>
+            """;
+
+        // Act
+        var result = XmlRpcResponseParser.ParseResponse<AttachmentRequestResponse>(uploadReqSpecAttachmentXml);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(456, result.ForeignKeyId);
+        Assert.Equal("req_specs", result.LinkedTableName);
+        Assert.Equal("Requirement Specification Document", result.Title);
+        Assert.Equal("Supporting documentation for requirement specification", result.Description);
+        Assert.Equal("req_spec.docx", result.FileName);
+        Assert.Equal(1024, result.Size);
+        Assert.Equal("application/vnd.openxmlformats-officedocument.wordprocessingml.document", result.FileType);
+    }
+
+    [Fact]
+    public void ParseResponse_ShouldParseUploadRequirementAttachmentResponse_Success()
+    {
+        // Arrange - Successful response from uploadRequirementAttachment
+        var uploadReqAttachmentXml = """
+            <?xml version="1.0"?>
+            <methodResponse>
+              <params>
+                <param>
+                  <value>
+                    <struct>
+                      <member><name>fk_id</name><value><int>789</int></value></member>
+                      <member><name>fk_table</name><value><string>requirements</string></value></member>
+                      <member><name>title</name><value><string>Requirement Supporting Document</string></value></member>
+                      <member><name>description</name><value><string>Additional documentation for this requirement</string></value></member>
+                      <member><name>file_name</name><value><string>requirement_details.txt</string></value></member>
+                      <member><name>file_size</name><value><int>512</int></value></member>
+                      <member><name>file_type</name><value><string>text/plain</string></value></member>
+                    </struct>
+                  </value>
+                </param>
+              </params>
+            </methodResponse>
+            """;
+        // Act
+        var result = XmlRpcResponseParser.ParseResponse<AttachmentRequestResponse>(uploadReqAttachmentXml);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(789, result.ForeignKeyId);
+        Assert.Equal("requirements", result.LinkedTableName);
+        Assert.Equal("Requirement Supporting Document", result.Title);
+        Assert.Equal("Additional documentation for this requirement", result.Description);
+        Assert.Equal("requirement_details.txt", result.FileName);
+        Assert.Equal(512, result.Size);
+        Assert.Equal("text/plain", result.FileType);
+    }
+
+    [Fact]
+    public void ParseResponse_ShouldHandleUploadAttachmentResponse_WithLargeFileSize()
+    {
+        // Arrange - Response with large file size
+        var largeFileXml = """
+            <?xml version="1.0"?>
+            <methodResponse>
+              <params>
+                <param>
+                  <value>
+                    <struct>
+                      <member><name>fk_id</name><value><int>888</int></value></member>
+                      <member><name>fk_table</name><value><string>test_executions</string></value></member>
+                      <member><name>title</name><value><string>Large Test Data File</string></value></member>
+                      <member><name>description</name><value><string>Large dataset for performance testing</string></value></member>
+                      <member><name>file_name</name><value><string>large_dataset.zip</string></value></member>
+                      <member><name>file_size</name><value><int>104857600</int></value></member>
+                      <member><name>file_type</name><value><string>application/zip</string></value></member>
+                    </struct>
+                  </value>
+                </param>
+              </params>
+            </methodResponse>
+            """;
+        // Act
+        var result = XmlRpcResponseParser.ParseResponse<AttachmentRequestResponse>(largeFileXml);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(888, result.ForeignKeyId);
+        Assert.Equal("test_executions", result.LinkedTableName);
+        Assert.Equal("Large Test Data File", result.Title);
+        Assert.Equal("Large dataset for performance testing", result.Description);
+        Assert.Equal("large_dataset.zip", result.FileName);
+        Assert.Equal(104857600, result.Size); // 100MB
+        Assert.Equal("application/zip", result.FileType);
+    }
+
+    [Fact]
+    public void ParseResponse_ShouldHandleUploadAttachmentResponse_WithSpecialCharacters()
+    {
+        // Arrange - Response with special characters in file names and descriptions (properly escaped for XML)
+        var specialCharsXml = """
+            <?xml version="1.0"?>
+            <methodResponse>
+              <params>
+                <param>
+                  <value>
+                    <struct>
+                      <member><name>fk_id</name><value><int>777</int></value></member>
+                      <member><name>fk_table</name><value><string>nodes_hierarchy</string></value></member>
+                      <member><name>title</name><value><string>Test-File_With&amp;Special#Characters</string></value></member>
+                      <member><name>description</name><value><string>File with éñ¡øñál çhäråçtérs and symbols: @#$%^&amp;*()</string></value></member>
+                      <member><name>file_name</name><value><string>test-file_with@special#chars.txt</string></value></member>
+                      <member><name>file_size</name><value><int>256</int></value></member>
+                      <member><name>file_type</name><value><string>text/plain; charset=utf-8</string></value></member>
+                    </struct>
+                  </value>
+                </param>
+              </params>
+            </methodResponse>
+            """;
+        
+        // Act
+        var result = XmlRpcResponseParser.ParseResponse<AttachmentRequestResponse>(specialCharsXml);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(777, result.ForeignKeyId);
+        Assert.Equal("nodes_hierarchy", result.LinkedTableName);
+        Assert.Equal("Test-File_With&Special#Characters", result.Title);
+        Assert.Equal("File with éñ¡øñál çhäråçtérs and symbols: @#$%^&*()", result.Description);
+        Assert.Equal("test-file_with@special#chars.txt", result.FileName);
+        Assert.Equal(256, result.Size);
+        Assert.Equal("text/plain; charset=utf-8", result.FileType);
+    }
+
+    [Fact]
+    public void ParseResponse_ShouldHandleUploadAttachment_ZeroByteFile()
+    {
+        // Arrange - Response for zero-byte file upload
+        var zeroByteFileXml = """
+            <?xml version="1.0"?>
+            <methodResponse>
+              <params>
+                <param>
+                  <value>
+                    <struct>
+                      <member><name>fk_id</name><value><int>555</int></value></member>
+                      <member><name>fk_table</name><value><string>nodes_hierarchy</string></value></member>
+                      <member><name>title</name><value><string>Empty File</string></value></member>
+                      <member><name>description</name><value><string>Zero-byte file for testing</string></value></member>
+                      <member><name>file_name</name><value><string>empty.txt</string></value></member>
+                      <member><name>file_size</name><value><int>0</int></value></member>
+                      <member><name>file_type</name><value><string>text/plain</string></value></member>
+                    </struct>
+                  </value>
+                </param>
+              </params>
+            </methodResponse>
+            """;
+        // Act
+        var result = XmlRpcResponseParser.ParseResponse<AttachmentRequestResponse>(zeroByteFileXml);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(555, result.ForeignKeyId);
+        Assert.Equal("nodes_hierarchy", result.LinkedTableName);
+        Assert.Equal("Empty File", result.Title);
+        Assert.Equal("Zero-byte file for testing", result.Description);
+        Assert.Equal("empty.txt", result.FileName);
+        Assert.Equal(0, result.Size);
+        Assert.Equal("text/plain", result.FileType);
+    }
+
+    #endregion
 }

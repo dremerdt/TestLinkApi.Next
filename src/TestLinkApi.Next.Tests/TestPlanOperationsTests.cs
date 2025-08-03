@@ -866,6 +866,155 @@ public class TestPlanOperationsTests : TestLinkTestBase, IDisposable
 
     #endregion
 
+    #region ReportTestCaseResult Tests
+
+    [Fact]
+    public async Task ReportTestCaseResultAsync_WithValidParameters_ReportsResult()
+    {
+        // Arrange - Get a project, test plan, and test case
+        var projects = await Client.GetProjectsAsync();
+        var project = projects.FirstOrDefault();
+        
+        if (project == null)
+        {
+            return; // Skip if no projects exist
+        }
+
+        var testPlans = await Client.GetProjectTestPlansAsync(project.Id);
+        var testPlan = testPlans.FirstOrDefault();
+        
+        if (testPlan == null)
+        {
+            return; // Skip if no test plans exist
+        }
+
+        // Get test cases for the test plan
+        var testCases = await Client.GetTestCasesForTestPlanAsync(testPlan.Id);
+        var testCase = testCases.FirstOrDefault();
+        
+        if (testCase == null)
+        {
+            return; // Skip if no test cases exist in the test plan
+        }
+
+        // Get builds for the test plan
+        var builds = await Client.GetBuildsForTestPlanAsync(testPlan.Id);
+        var build = builds.FirstOrDefault();
+        
+        if (build == null)
+        {
+            // Create a build if none exists
+            var buildResult = await Client.CreateBuildAsync(testPlan.Id, $"TestBuild_{Guid.NewGuid():N}");
+            if (!buildResult.Status)
+            {
+                return; // Skip if we can't create a build
+            }
+            build = new Build { Id = buildResult.Id };
+        }
+
+        var request = new ReportTestCaseResultRequest
+        {
+            TestCaseId = testCase.TestCaseId,
+            TestPlanId = testPlan.Id,
+            Status = "p", // Pass
+            Notes = "Test executed successfully via integration test",
+            BuildId = build.Id,
+            Overwrite = true,
+            Guess = true
+        };
+
+        // Act
+        var result = await Client.ReportTestCaseResultAsync(request);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Status, $"Failed to report test case result: {result.Message}");
+        Assert.Equal("reportTCResult", result.Operation);
+    }
+
+    [Fact]
+    public async Task ReportTestCaseResultAsync_WithFailStatus_ReportsFailure()
+    {
+        // Arrange - Get a project, test plan, and test case
+        var projects = await Client.GetProjectsAsync();
+        var project = projects.FirstOrDefault();
+        
+        if (project == null)
+        {
+            return; // Skip if no projects exist
+        }
+
+        var testPlans = await Client.GetProjectTestPlansAsync(project.Id);
+        var testPlan = testPlans.FirstOrDefault();
+        
+        if (testPlan == null)
+        {
+            return; // Skip if no test plans exist
+        }
+
+        var testCases = await Client.GetTestCasesForTestPlanAsync(testPlan.Id);
+        var testCase = testCases.FirstOrDefault();
+        
+        if (testCase == null)
+        {
+            return; // Skip if no test cases exist
+        }
+
+        var builds = await Client.GetBuildsForTestPlanAsync(testPlan.Id);
+        var build = builds.FirstOrDefault();
+        
+        if (build == null)
+        {
+            return; // Skip if no builds exist
+        }
+
+        var request = new ReportTestCaseResultRequest
+        {
+            TestCaseId = testCase.TestCaseId,
+            TestPlanId = testPlan.Id,
+            Status = "f", // Fail
+            Notes = "Test failed due to unexpected behavior",
+            BuildId = build.Id,
+            BugId = 12345 // Example bug ID
+        };
+
+        // Act
+        var result = await Client.ReportTestCaseResultAsync(request);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Status, $"Failed to report test case result: {result.Message}");
+    }
+
+    [Fact]
+    public async Task ReportTestCaseResultAsync_WithNullRequest_ThrowsArgumentNullException()
+    {
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(() => 
+            Client.ReportTestCaseResultAsync(null!));
+    }
+
+    [Fact]
+    public async Task ReportTestCaseResultAsync_WithCancellationToken_RespectsCancellation()
+    {
+        // Arrange
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+
+        var request = new ReportTestCaseResultRequest
+        {
+            TestCaseId = 1,
+            TestPlanId = 1,
+            Status = "p"
+        };
+
+        // Act & Assert
+        await Assert.ThrowsAsync<TaskCanceledException>(() => 
+            Client.ReportTestCaseResultAsync(request, cts.Token));
+    }
+
+    #endregion
+
     #region Disposal
 
     public void Dispose()

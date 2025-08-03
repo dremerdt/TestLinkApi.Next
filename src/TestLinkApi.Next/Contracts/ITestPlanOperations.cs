@@ -150,4 +150,14 @@ public interface ITestPlanOperations
     Task<GeneralResult> DeleteExecutionAsync(
         int executionId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Report test case execution result
+    /// </summary>
+    /// <param name="request">Request containing test case result information</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result of the report operation</returns>
+    Task<GeneralResult> ReportTestCaseResultAsync(
+        ReportTestCaseResultRequest request,
+        CancellationToken cancellationToken = default);
 }
